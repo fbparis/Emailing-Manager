@@ -74,4 +74,23 @@ Ensuite, vous n'avez qu'à checker vos boîtes aux lettres.
 
 --- L'API
 
-A venir...
+J'ai déjà consacré trop de temps à cette doc de merde donc on va faire minimaliste, pour le reste je vous invite à mater le code de api.php :)
+
+En gros, quand un client s'inscrit sur un de vos sites :
+
+	$prenom = trim(stripslashes(strip_tags(@$_REQUEST['prenom'])));
+	$email = trim(stripslashes(strip_tags(@$_REQUEST['email'])));
+	if ($prenom && preg_match('#^[^@ ]+@[^@ ]+$#si',$email)) {
+		include_once '/REPERTOIRE_DU_SCRIPT/api.php';
+		if ($client = Marketing::addClient('exemple.fr','categorie','sous-categorie',$email,$prenom)) {
+			Marketing::mailClient($client);
+		}
+	}
+
+Cela va le mettre en base si l'email semble valide et lui envoyer le premier message de notification si il y en a. Dans ce cas classique, un nombre minimal de requêtes est fait donc il n'y a pas de verification dns pour l'email, mais cela sera fait plus tard dans cron.php si besoin est.
+
+Notez aussi que l'api utilise une fonction spéciale pour valider les emails qui permet quand cela est possible de corriger les adresses erronées (vous pouvez ajouter des domaines courants directement ligne 27 de api.php...).
+
+--- A VENIR
+
+Une admin online pour gérer tout ça.
