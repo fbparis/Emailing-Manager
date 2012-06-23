@@ -73,7 +73,8 @@ class Marketing {
 		self::$api = new Mailjet(MARKETING_MAILJET_API_KEY,MARKETING_MAILJET_API_SECRET);
 		self::$api->debug = 0;
 		self::$api->output = 'json';
-		if (mb_internal_encoding('UTF-8') === false) self::log('unable to set internal encoding to UTF-8');
+		if (@mb_internal_encoding('UTF-8') === false) self::log('unable to set internal encoding to UTF-8');
+		if (!@mysql_set_charset('utf8',self::$db)) self::log('unable to set mysql charset to utf8');
 	}
 	
 	public static function getClient($filter='1',$new=false,$ref='default') {
@@ -226,9 +227,10 @@ class Marketing {
 			$template = sprintf(self::$notification_tplmask,$campaignID);
 			if (!file_exists($template)) return 0;
 		}
-		$prenom = @$client->prenom ? mb_convert_case(utf8_encode($client->prenom),MB_CASE_TITLE,'UTF-8') : ''; 
+		$prenom = @$client->prenom ? mb_convert_case($client->prenom,MB_CASE_TITLE,'UTF-8') : ''; 
 		$body = file_get_contents($template);
 		$body = str_replace('[[PRENOM]]',$prenom,$body);
+		$body = str_replace('[[EMAIL]]',$client->email,$body);
 		$body = str_replace('[[BONJOUR]]',(date('G') <= 4) || (date('G') >= 18) ? 'Bonsoir' : 'Bonjour',$body);
 		$body = str_replace('[[TRACKER]]','mailing_' . $campaignID,$body);
 		$body = str_replace('[[JOUR]]',self::$weekDay[date('w')],$body);
