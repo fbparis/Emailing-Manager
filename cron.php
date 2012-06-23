@@ -1,5 +1,9 @@
 <?php
 
+/* 
+IN Crontab: 1 * * * * /usr/bin/php /PATH_TO_YOUR_DIR/cron.php > /dev/null
+*/
+
 ob_start();
 
 define('DAILY_LIMIT',200);
