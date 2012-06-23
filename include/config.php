@@ -13,7 +13,7 @@ define('MARKETING_SMTP_PASSWORD','');
 define('MARKETING_MAILJET_API_KEY','');
 define('MARKETING_MAILJET_API_SECRET','');
 define('MARKETING_MAILING_INTERVAL',28800); // 8h
-define('DAILY_LIMIT',200); // Valeur par défaut pour un compte gratuite Mailjet
+define('DAILY_LIMIT',200); // Valeur par dÃ©faut pour un compte gratuite Mailjet
 
 require_once dirname(__FILE__) . '/class.phpmailer.php';
 require_once dirname(__FILE__) . '/php-mailjet.class-mailjet-0.1.php';
