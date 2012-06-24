@@ -35,6 +35,8 @@ class Marketing {
 		'orange.fr',
 		'free.fr',
 		'sfr.fr',
+		'msn.com',
+		'cegetel.net',
 		'wanadoo.fr',
 		'voila.fr',
 		'caramail.com',
