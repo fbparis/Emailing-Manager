@@ -1,9 +1,5 @@
 <?php
 
-/* 
-IN Crontab: 1 * * * * /usr/bin/php /PATH_TO_YOUR_DIR/cron.php > /dev/null
-*/
-
 ob_start();
 
 $sendingHours = array('8','10','13','15','19');
@@ -122,9 +118,10 @@ while ($client = Marketing::getClient(sprintf('status IN ("%s","%s")',Marketing:
 		if ($client->emails_sent == 0) {
 			// Sauf si la limite d'envoi de la session est déjà dépassée
 			if ($sendingLimit > 0) {
-				if (Marketing::mailClient($client) === false) {
+				$ret = Marketing::mailClient($client);
+				if ($ret === false) {
 					debug(" Erreur lors de l'envoi de l'email de bienvenue à $client->email");
-				} else {
+				} elseif ($ret) {
 					$cron->daily_emails_sent->notification++;
 					$cron->daily_emails_sent->total++;
 					$sendingLimit--;
@@ -242,7 +239,7 @@ if ($hour == 0) {
 	debug('--- Bilan quotidien');
 	$cron->daily_stats[date('j',$YESTERDAY)]->sent = $previously_emails_sent;
 	for ($i = min(2,date('j',$YESTERDAY) - 1); $i >= 0; $i--) {
-		$ts = $NOW - $i * 24 * 3600;
+		$ts = $YESTERDAY - $i * 24 * 3600;
 		debug(sprintf(' %s : %d emails envoyés (%d marketing, %d notifications), %d emails en attente (%d marketing, %d notifications)',date('d/m/Y',$ts),$cron->daily_stats[date('j',$ts)]->sent->total,$cron->daily_stats[date('j',$ts)]->sent->marketing,$cron->daily_stats[date('j',$ts)]->sent->notification,$cron->daily_stats[date('j',$ts)]->overdue->marketing+$cron->daily_stats[date('j',$ts)]->overdue->notification,$cron->daily_stats[date('j',$ts)]->overdue->marketing,$cron->daily_stats[date('j',$ts)]->overdue->notification));
 	}
 
