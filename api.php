@@ -24,6 +24,15 @@ class Marketing {
 	
 	protected static $weekDay = array('dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi');
 	
+	public static $blocked_hosts = array(
+		'justice.fr',
+		'gouv.fr',
+		'yopmail.com',
+		'yopmail.fr',
+		'jetable.org',
+		'rtrtr.com'
+	);
+	
 	public static $known_hosts = array(
 		'gmail.com',
 		'hotmail.fr',
@@ -302,6 +311,10 @@ class Marketing {
 		$host = preg_replace('#\.+#s','.',$host);
 		$host = preg_replace('# +#s','-',$host);
 		if (strpos($host,'.') === false) $host .= '.com';
+		
+		foreach (self::$blocked_hosts as $blocked_host) {
+			if (preg_match('#\.' . preg_quote($blocked_host,'#') . '$#si',".$host")) return false;
+		}
 	
 		if (!preg_match(self::$host_regex,$host)) {
 			$min = self::$max_distance + 1;
@@ -336,7 +349,10 @@ class Marketing {
 							$min = $d;
 						}
 					}
-					if (!$new_host) return false;
+					if (!$new_host) {
+						self::$checked_hosts[$host] = false;
+						return false;
+					}
 					self::$checked_hosts[$host] = $new_host;
 					$host = $new_host;
 				} elseif ($dnsCheck) {
