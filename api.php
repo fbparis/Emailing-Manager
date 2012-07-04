@@ -26,6 +26,8 @@ class Marketing {
 	
 	public static $blocked_hosts = array(
 		'justice.fr',
+		'police.fr',
+		'service-public.fr',
 		'gouv.fr',
 		'yopmail.com',
 		'yopmail.fr',
@@ -45,6 +47,7 @@ class Marketing {
 		'free.fr',
 		'sfr.fr',
 		'msn.com',
+		'aol.com',
 		'cegetel.net',
 		'wanadoo.fr',
 		'voila.fr',
@@ -55,7 +58,8 @@ class Marketing {
 		'videotron.ca',
 		'gmx.fr',
 		'aliceadsl.fr',
-		'libertysurf.fr'
+		'libertysurf.fr',
+		'numericable.fr'
 	);
 	
 	public static $max_distance = 3;
@@ -248,12 +252,13 @@ class Marketing {
 		$body = str_replace('[[TRACKER]]','mailing_' . $campaignID,$body);
 		$body = str_replace('[[JOUR]]',self::$weekDay[date('w')],$body);
 		$body = preg_replace_callback('#\[\[([0-9]+)-([0-9]+)\]\]#s',create_function('$m','return mt_rand($m[1],$m[2]);'),$body);
-		if (!$body) return 0; 
 		if (preg_match('#<title>(.*?)</title>#si',$body,$m)) $subject = $m[1]; else return 0;
 		if (preg_match('#<meta name="author" content="([^" ]+) ([^"]+)"#si',$body,$m)) {
 			$senderEmail = $m[1];
 			$senderName = $m[2];
 		} else return 0;
+		$body = preg_replace('#<!--.*?-->#s','',$body);
+		if (!$body) return 0; 
 
 		$mail = new PHPMailer(true); 
 		$mail->IsSMTP(); 
@@ -267,7 +272,12 @@ class Marketing {
 			$mail->AddAddress($client->email,$prenom);
 			$mail->SetFrom($senderEmail,$senderName);
 			$mail->Subject = $subject;
-			$mail->MsgHTML($body);
+			if (strip_tags($body) == $body) {
+				$mail->Body = $body;
+				$mail->WordWrap = 70;
+			} else {
+				$mail->MsgHTML($body);
+			} 
 			$mail->addCustomHeader("X-Mailjet-Campaign: $campaignID");
 			if (!$force) $mail->addCustomHeader('X-Mailjet-DeduplicateCampaign: 1');
 			$mail->CharSet = 'UTF-8';

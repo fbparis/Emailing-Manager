@@ -2,13 +2,14 @@
 
 ob_start();
 
-$sendingHours = array('8','10','13','15','19');
+$sendingHours = range(8,19); //array('8','10','13','15','19');
 
 include_once dirname(__FILE__) . '/api.php';
 
 $NOW = time();
 $YESTERDAY = $NOW - 24 * 3600;
 $hour = date('G',$NOW);
+$today = date('Ymd',$NOW);
 $dataFile = sprintf('%s.data.inc',__FILE__);
 $logFile = dirname(__FILE__) . sprintf('/logs/%s.%s.log',basename(__FILE__),date('Ym'));
 $templates_dir = dirname(__FILE__) . '/templates';
@@ -40,12 +41,12 @@ debug('--- Infos diverses');
 debug(' Internal Encoding: ' . mb_internal_encoding());
 $cron = @unserialize(file_get_contents($dataFile));
 if (!$cron) {
-	$cron = (object) array('daily_emails_sent'=>(object) array('marketing'=>0,'notification'=>0,'total'=>0),'bounces_cnt'=>0,'daily_stats'=>array(),'monthly_stats'=>array());
+	$cron = (object) array('today'=>$today,'daily_emails_sent'=>(object) array('marketing'=>0,'notification'=>0,'total'=>0),'bounces_cnt'=>0,'daily_stats'=>array(),'monthly_stats'=>array());
 	debug(' Pas de fichier de conf trouvé');
 } else {
 	debug(' Fichier de conf chargé');
 }
-if ($hour == 0) {
+if (@$cron->today != $today) {
 	$previously_emails_sent = $cron->daily_emails_sent;
 	$cron->daily_emails_sent = (object) array('marketing'=>0,'notification'=>0,'total'=>0);
 }
@@ -63,7 +64,6 @@ if (!$report = Marketing::apiQuery('reportEmailstatistics',array(array('ts_from'
 }
 
 $sendingLimit = min($sendingLimit,max(0,DAILY_LIMIT - $cron->daily_emails_sent->total));
-
 debug(" Limite d'envois pour la session : $sendingLimit");
 
 debug('--- Gestion des Bounces');
@@ -219,7 +219,7 @@ if (count($notification_templates) && ($sendingLimit > 0)) {
 	debug('--- Envois de notifications');
 	foreach ($notification_templates as $m) {
 		$n = 0;
-		while ($client = Marketing::getClient("site='$m->site' AND cat='$m->cat' AND subcat='$m->subcat' AND status=" . Marketing::STATUS_LISTED . " AND emails_sent<$m->last AND date_lastemail<" . ($NOW - MARKETING_MAILING_INTERVAL) . " ORDER BY emails_sent ASC,RAND()")) {
+		while ($client = Marketing::getClient("site='$m->site' AND cat='$m->cat' AND subcat='$m->subcat' AND status=" . Marketing::STATUS_LISTED . " AND emails_sent<=$m->last AND date_lastemail<" . ($NOW - MARKETING_MAILING_INTERVAL) . " ORDER BY emails_sent ASC,RAND()")) {
 			if (Marketing::mailClient($client,false)) {
 				$cron->daily_emails_sent->notification++;
 				$cron->daily_emails_sent->total++;				
@@ -235,7 +235,7 @@ if (count($notification_templates) && ($sendingLimit > 0)) {
 	}
 }
 
-if ($hour == 0) {
+if (@$cron->today != $today) {
 	debug('--- Bilan quotidien');
 	$cron->daily_stats[date('j',$YESTERDAY)]->sent = $previously_emails_sent;
 	for ($i = min(2,date('j',$YESTERDAY) - 1); $i >= 0; $i--) {
@@ -260,19 +260,23 @@ if ($hour == 0) {
 			if (array_key_exists(date('M',$ts),$cron->monthly_stats)) debug(sprintf(' %s : %d emails envoyés (%d marketing, %d notifications), %d emails en attente (%d marketing, %d notifications)',date('M',$ts),$cron->monthly_stats[date('M',$ts)]->sent->total,$cron->monthly_stats[date('M',$ts)]->sent->marketing,$cron->monthly_stats[date('M',$ts)]->sent->notification,$cron->monthly_stats[date('M',$ts)]->overdue->marketing+$cron->monthly_stats[date('M',$ts)]->overdue->notification,$cron->monthly_stats[date('M',$ts)]->overdue->marketing,$cron->monthly_stats[date('M',$ts)]->overdue->notification));
 		}
 	}
-} else if ($hour == 23) {
+}
+
+if ($hour == 23) {
 	debug("--- Nombre d'envois en attente en fin de journée");
 	foreach ($marketing_templates as $m) {
 		$overdue->marketing += num_rows("site='$m->site' AND cat='$m->cat' AND subcat='$m->subcat' AND status=" . Marketing::STATUS_LISTED . " AND date_lastnewsletter<$m->lastmod");
 	}
 	foreach($notification_templates as $m) {
-		$overdue->notification += num_rows("site='$m->site' AND cat='$m->cat' AND subcat='$m->subcat' AND status=" . Marketing::STATUS_LISTED . " AND emails_sent<$m->last AND date_lastemail<" . ($NOW - MARKETING_MAILING_INTERVAL));
+		$overdue->notification += num_rows("site='$m->site' AND cat='$m->cat' AND subcat='$m->subcat' AND status=" . Marketing::STATUS_LISTED . " AND emails_sent<=$m->last AND date_lastemail<" . ($NOW - MARKETING_MAILING_INTERVAL));
 	}
 	$cron->daily_stats[date('j',$NOW)] = (object) array('sent'=>null,'overdue'=>$overdue);
 	debug(" $overdue->marketing newsletters et $overdue->notification notifications en attente d'envoi");
 }
 
 debug('--- Sauvegarde des paramètres et des stats');
+
+$cron->today = $today;
 
 if (!@file_put_contents($dataFile,serialize($cron))) debug(' Erreur en sauvegardant les paramètres');
 
