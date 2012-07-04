@@ -186,7 +186,7 @@ if (($hour == 23) || ($sendingLimit > 0)) {
 	foreach ($todo as $file) {
 		list($site,$cat,$subcat,$n) = preg_match('#^([^_]+_[^_]+_[^_]+_[0-9]+)\.html$#si',basename($file),$m) ? split('_',$m[1]) : null;
 		if (!$site || !$cat || !$subcat || !is_numeric($n)) continue;
-		if (!array_key_exists("$site $cat $subcat",$todo)) $notification_templates["$site $cat $subcat"] = (object) array('site'=>$site,'cat'=>$cat,'subcat'=>$subcat,'last'=>$n);
+		if (!array_key_exists("$site $cat $subcat",$notification_templates)) $notification_templates["$site $cat $subcat"] = (object) array('site'=>$site,'cat'=>$cat,'subcat'=>$subcat,'last'=>$n);
 		else $notification_templates["$site $cat $subcat"]->last = max($n,$notification_templates["$site $cat $subcat"]->last);
 	}
 	shuffle($notification_templates);
