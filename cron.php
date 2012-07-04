@@ -33,10 +33,6 @@ function num_rows($query) {
 
 printf("%s\n",date('d/m/Y @ H:i:s',$NOW));
 
-$sendingLimit = in_array($hour,$sendingHours) ? floor(DAILY_LIMIT / count($sendingHours)) : 0;
-$lastHour = array_pop($sendingHours);
-if ($hour == $lastHour) $sendingLimit = DAILY_LIMIT;
-
 debug('--- Infos diverses');
 debug(' Internal Encoding: ' . mb_internal_encoding());
 $cron = @unserialize(file_get_contents($dataFile));
@@ -63,7 +59,8 @@ if (!$report = Marketing::apiQuery('reportEmailstatistics',array(array('ts_from'
 	$cron->daily_emails_sent->total = max($cron->daily_emails_sent->total,$report->stats->total);
 }
 
-$sendingLimit = min($sendingLimit,max(0,DAILY_LIMIT - $cron->daily_emails_sent->total));
+$sendingLimit = !in_array($hour,$sendingHours) ? 0 : floor( max( 0,DAILY_LIMIT - $cron->daily_emails_sent->total ) / ( 1 + array_search($hour, array_reverse($sendingHours))));
+
 debug(" Limite d'envois pour la session : $sendingLimit");
 
 debug('--- Gestion des Bounces');
