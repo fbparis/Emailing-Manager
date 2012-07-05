@@ -37,7 +37,7 @@ debug('--- Infos diverses');
 debug(' Internal Encoding: ' . mb_internal_encoding());
 $cron = @unserialize(file_get_contents($dataFile));
 if (!$cron) {
-	$cron = (object) array('today'=>$today,'daily_emails_sent'=>(object) array('marketing'=>0,'notification'=>0,'total'=>0),'bounces_cnt'=>0,'daily_stats'=>array(),'monthly_stats'=>array());
+	$cron = (object) array('today'=>$today,'daily_emails_sent'=>(object) array('marketing'=>0,'notification'=>0,'total'=>0),'last_bounce_ts'=>0,'daily_stats'=>array(),'monthly_stats'=>array());
 	debug(' Pas de fichier de conf trouvé');
 } else {
 	debug(' Fichier de conf chargé');
@@ -66,39 +66,27 @@ debug(" Limite d'envois pour la session : $sendingLimit");
 debug('--- Gestion des Bounces');
 
 $start = $cnt = 0;
-$limit = 100;
+$limit = 1000;
+$last_ts = $cron->last_bounce_ts;
 
-while ($bounces = Marketing::apiQuery('reportEmailBounce',array(array('limit'=>$limit,'start'=>$start)),false)) {
-	if (!@$bounces->cnt || ($bounces->cnt == $cron->bounces_cnt)) break;
-	if ($bounces->cnt < $cron->bounces_cnt) {
-		debug(" $bounces->cnt bounces contre $cron->bounces_cnt précédemment, remise à zéro");
-		$cron->bounces_cnt = 0;
-	}
-	if (!$cnt) {
-		$cnt = $bounces->cnt;
-		debug(sprintf(' %d contacts à bouncer',$cnt - $cron->bounces_cnt));
-	}
-	foreach ($bounces->bounces as $i=>$bounce) {
-		if (($cnt + $i) < $bounces->cnt) continue;
-		$start++;
-		if ($bounce->hard_bounce && $bounce->blocked) {
-			$q = array(sprintf('email="%s"',$bounce->email));
-			list($site,$cat,$subcat) = split('_',$bounce->customcampaign);
-			if ($site && $cat && $subcat) $q[] = sprintf('site="%s" AND cat="%s" AND subcat="%s"',$site,$cat,$subcat);
-			$q = implode(' AND ',$q);
-			while ($client = Marketing::getClient($q)) {
-				if (false === Marketing::bounceClient($client,$bounce)) debug("  Erreur en bouncant $client->email");
-			}
-			
+while ($response = Marketing::apiQuery('reportEmailBounce',array(array('limit'=>$limit,'start'=>$start)),false)) {
+	if (!@count($response->bounces)) break;
+	foreach ($response->bounces as $bounce) if ($bounce->date_ts > $last_ts) {
+		$cron->last_bounce_ts = max($bounce->date_ts,$cron->last_bounce_ts);
+		$q = array(sprintf('email="%s"',$bounce->email));
+		list($site,$cat,$subcat) = split('_',$bounce->customcampaign);
+		if ($site && $cat && $subcat) $q[] = sprintf('site="%s" AND cat="%s" AND subcat="%s"',$site,$cat,$subcat);
+		$q = implode(' AND ',$q);
+		while ($client = Marketing::getClient($q)) {
+			if (false === Marketing::bounceClient($client,$bounce)) debug("  Erreur en bouncant $client->email");
+			else $cnt++;
 		}
-		if (($start + $cron->bounces_cnt) >= $bounces->cnt) break(2);
 	}
-	$cnt = $bounces->cnt;
+	if (count($response->bounces) < $limit) break;
+	$start += $limit;
 }
 
-$cron->bounces_cnt += $start;
-
-debug(" $start nouveaux bounces ($cron->bounces_cnt au total)");
+debug(" $cnt nouveaux bounces traités");
 
 debug('--- Synchronisation des nouveaux clients avec Mailjet');
 $n_total = $n_done = 0;

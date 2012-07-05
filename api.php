@@ -55,6 +55,7 @@ class Marketing {
 		'caramail.fr',
 		'yahoo.fr',
 		'yahoo.com',
+		'bbox.fr',
 		'videotron.ca',
 		'gmx.fr',
 		'aliceadsl.fr',
@@ -152,7 +153,7 @@ class Marketing {
 	
 	public static function updateClient(&$client,$fields) {
 		$q = array();
-		if (array_key_exists('status',$fields)) $fields['previous_status'] = $client->status;
+		if (array_key_exists('status',$fields) && ($fields['previous_status'] != $client->status)) $fields['previous_status'] = $client->status;
 		foreach ($fields as $k=>$v) {
 			if (($k == 'data') && is_array($v)) foreach ($v as $data_key => $data_value) self::setData($client,$data_key,$data_value);
 			if (($k == 'bounce_info') && is_object($v)) $v = self::serialize($v);
@@ -176,10 +177,26 @@ class Marketing {
 	
 	public static function bounceClient(&$client,$bounce_info=null) {
 		if ($client->status == self::STATUS_BOUNCED) return 0;
-		if (false === self::unrecordClient($client)) return false;
-		if (false === self::updateClient($client,array('status'=>self::STATUS_BOUNCED,'bounce_info'=>$bounce_info))) return false;
-		$ret = @mysql_affected_rows(self::$db);
-		return $ret;
+		if (!is_object($bounce_info)) return false;
+		if (@$bounce_info->hard_bounce) {
+			$new_host = '';
+			if (in_array(trim(@$bounce_info->error),array('user unknown','no mail host'))) {
+				list($email_user,$email_host) = split('@',$client->email);
+				if (!in_array($email_host,self::$known_hosts) && ($new_host = self::suggestHost($email_host))) {
+					if (false === self::unrecordClient($client)) return false;
+					if (false !== self::updateClient($client,array('email'=>"$email_user@$new_host",'status'=>self::STATUS_VALID,'emails_sent'=>0,'bounce_info'=>$bounce_info))) {
+					return 1;
+					}		
+				} 
+			}
+			if (@$bounce_info->blocked) {
+				if (!$new_host) if (false === self::unrecordClient($client)) return false;
+				if (false === self::updateClient($client,array('status'=>self::STATUS_BOUNCED,'bounce_info'=>$bounce_info))) return false;
+				return 1;
+			}
+		}
+		if (false === self::updateClient($client,array('bounce_info'=>$bounce_info))) return false;
+		return 1;
 	}
 
 	public static function delClient(&$client) {
