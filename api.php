@@ -180,7 +180,7 @@ class Marketing {
 		if (!is_object($bounce_info)) return false;
 		if (@$bounce_info->hard_bounce) {
 			$new_host = '';
-			if (in_array(trim(@$bounce_info->error),array('user unknown','no mail host'))) {
+			if (in_array(trim(@$bounce_info->error),array('user unknown','no mail host','invalid domain'))) {
 				list($email_user,$email_host) = split('@',$client->email);
 				if (!in_array($email_host,self::$known_hosts) && ($new_host = self::suggestHost($email_host))) {
 					if (false === self::unrecordClient($client)) return false;
