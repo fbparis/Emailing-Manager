@@ -31,18 +31,22 @@ foreach ($clients as $email=>$prenom) {
 	$body = str_replace('[[PRENOM]]',$prenom,$body);
 	$body = str_replace('[[EMAIL]]',$email,$body);
 	$body = str_replace('[[BONJOUR]]',(date('G') <= 4) || (date('G') >= 18) ? 'Bonsoir' : 'Bonjour',$body);
-	$body = str_replace('[[TRACKER]]','mailing_test',$body);
+	$body = str_replace('[[TRACKER]]','test_' . basename($template),$body);
 	$body = str_replace('[[JOUR]]',$weekDay[date('w')],$body);
 	$body = preg_replace_callback('#\[\[([0-9]+)-([0-9]+)\]\]#s',create_function('$m','return mt_rand($m[1],$m[2]);'),$body);
-	if (!$body) continue;
 	if (preg_match('#<title>(.*?)</title>#si',$body,$m)) $subject = $m[1]; else continue;
 	if (preg_match('#<meta name="author" content="([^" ]+) ([^"]+)"#si',$body,$m)) {
 		$senderEmail = $m[1];
 		$senderName = $m[2];
 	} else continue;
+	$body = preg_replace('#<!--.*?-->#s','',$body);
+	if (!$body) continue; 
+	
+	printf("From %s (%s) to %s (%s) => %s\n",$senderEmail,$senderName,$email,$prenom,$subject);
 
 	$mail = new PHPMailer(true); 
 	$mail->IsSMTP(); 
+	$mail->SMTPDebug = false;
 	
 	try {
 		$mail->Host       = MARKETING_SMTP_HOST; 
@@ -53,8 +57,13 @@ foreach ($clients as $email=>$prenom) {
 		$mail->AddAddress($email,$prenom);
 		$mail->SetFrom($senderEmail,$senderName);
 		$mail->Subject = $subject;
-		$mail->MsgHTML($body);
-		$mail->addCustomHeader("X-Mailjet-Campaign: TEST");
+		if (strip_tags($body) == $body) {
+			$mail->Body = $body;
+			$mail->WordWrap = 70;
+		} else {
+			$mail->MsgHTML($body);
+		} 
+		$mail->addCustomHeader("X-Mailjet-Campaign: test_" . basename($template));
 		$mail->CharSet = 'UTF-8';
 		$mail->Send();
 	} catch (phpmailerException $e) {
