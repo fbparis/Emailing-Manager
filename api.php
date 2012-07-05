@@ -327,16 +327,7 @@ class Marketing {
 		}
 	
 		if (!preg_match(self::$host_regex,$host)) {
-			$min = self::$max_distance + 1;
-			$new_host = '';
-			foreach (self::$known_hosts as $known_host) {
-				$d = levenshtein($host,$known_host);
-				if ($d < $min) {
-					$new_host = $known_host;
-					if ($d < 2) break; 
-					$min = $d;
-				}
-			}
+			$new_host = self::suggestHost($host);
 			if (!$new_host) return false;
 			$host = $new_host;
 		}
@@ -349,16 +340,7 @@ class Marketing {
 				}
 			} else {
 				if ($dnsCheck && !checkdnsrr("$host.",'MX')) {
-					$min = self::$max_distance + 1;
-					$new_host = '';
-					foreach (self::$known_hosts as $known_host) {
-						$d = levenshtein($host,$known_host);
-						if ($d < $min) {
-							$new_host = $known_host;
-							if ($d < 2) break;
-							$min = $d;
-						}
-					}
+					$new_host = self::suggestHost($host);
 					if (!$new_host) {
 						self::$checked_hosts[$host] = false;
 						return false;
@@ -404,6 +386,20 @@ class Marketing {
 			self::$api_lists[$list->label] = $list->id;
 		}
 		return true;
+	}
+	
+	public static function suggestHost($host) {
+		$min = self::$max_distance + 1;
+		$new_host = '';
+		foreach (self::$known_hosts as $known_host) {
+			$d = levenshtein($host,$known_host);
+			if ($d < $min) {
+				$new_host = $known_host;
+				if ($d < 2) break; 
+				$min = $d;
+			}
+		}
+		return $new_host;
 	}
 	
 	protected static function unrecordClient(&$client) {
