@@ -68,7 +68,7 @@ Il y a deux trois choses à savoir :
 		
 Le mieux est de créer vos brouillons dans templates/dev/ et de les déplacer au bon endroit lorsque tout est OK. J'ai inclu un fichier test-mailing.php qui vous permet en ligne de commande de tester n'importe quel template (pour cela modifier d'abord les emails et prenoms des destinataires à la ligne 12 du script) avec la commande suivante par exemple :
 
-	test-mailing.php dev/ma-campagne.html
+	test-mailing.php templates/dev/ma-campagne.html
 	
 Ensuite, vous n'avez qu'à checker vos boîtes aux lettres.
 
@@ -90,6 +90,19 @@ En gros, quand un client s'inscrit sur un de vos sites :
 Cela va le mettre en base si l'email semble valide et lui envoyer le premier message de notification si il y en a. Dans ce cas classique, un nombre minimal de requêtes est fait donc il n'y a pas de verification dns pour l'email, mais cela sera fait plus tard dans cron.php si besoin est.
 
 Notez aussi que l'api utilise une fonction spéciale pour valider les emails qui permet quand cela est possible de corriger les adresses erronées (vous pouvez ajouter des domaines courants directement ligne 27 de api.php...).
+
+--- OUTILS
+
+	En plus du script test-mailing.php à utiliser en ligne de commande donc, j'ai aussi ajouté /web/bounces.php pour voir d'un coup d'oeil les bounces des 3 derniers jours (vous pouvez changer ce délai facilement en édiant le script). Vous devez avant remplacer "/REPERTOIRE_DU_SCRIPT/" par le bon répertoire pour que le script fonctionne. C'est assez pratique pour voir d'un coup d'oeil si il y a une campagne qui part en couilles (beaucoup de messages en spam ou refusés) et qu'il faut d'urgence corriger le template en question.
+	
+--- ENVOYER DES MESSAGES EN TEXTE BRUT
+	
+	J'ai également apporté une petite modification au système d'envoi d'email pour qu'il soit possible d'envoyer des messages texte uniquement, ça peut servir pour baisser le score spam au maximum. Cela est possible car les blocs de commentaires dans le html du template sont supprimés avant envoi. Il faut donc avoir un template de cette forme :
+	
+		<!-- <title>le sujet du mailing</title><meta name="author" content="user@host nom de l'envoyeur"> -->
+		Message en texte brut ici
+		
+	Bien sûr les variables fonctionnent de la même façon dans un message en texte brut que dans un message en html, [[PRENOM]] sera bien remplacé par le prénom, etc.
 
 --- A VENIR
 
