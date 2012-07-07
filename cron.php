@@ -2,8 +2,6 @@
 
 ob_start();
 
-$sendingHours = range(8,19); //array('8','10','13','15','19');
-
 include_once dirname(__FILE__) . '/api.php';
 
 $NOW = time();
@@ -13,6 +11,13 @@ $today = date('Ymd',$NOW);
 $dataFile = sprintf('%s.data.inc',__FILE__);
 $logFile = dirname(__FILE__) . sprintf('/logs/%s.%s.log',basename(__FILE__),date('Ym'));
 $templates_dir = dirname(__FILE__) . '/templates';
+
+switch (date('w',$NOW)) {
+	case '0': $sendingHours = range(14,16); break; // dimanche
+	case '6': $sendingHours = range(13,20); break; // samedi
+	case '5': $sendingHours = range(8,16); break; // vendredi
+	default: $sendingHours = range(8,19); // les autres jours
+}
 
 $timer = microtime(true);
 
