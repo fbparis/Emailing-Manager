@@ -95,6 +95,8 @@ Notez aussi que l'api utilise une fonction spéciale pour valider les emails qui
 
 	En plus du script test-mailing.php à utiliser en ligne de commande donc, j'ai aussi ajouté /web/bounces.php pour voir d'un coup d'oeil les bounces des 3 derniers jours (vous pouvez changer ce délai facilement en édiant le script). Vous devez avant remplacer "/REPERTOIRE_DU_SCRIPT/" par le bon répertoire pour que le script fonctionne. C'est assez pratique pour voir d'un coup d'oeil si il y a une campagne qui part en couilles (beaucoup de messages en spam ou refusés) et qu'il faut d'urgence corriger le template en question.
 	
+	Edit: J'ai aussi ajouté un dump des derniers logs de l'api et du cron.php (les infos les plus sensibles sont masquées au cas où) comme ça vous avez vraiment sur une page l'essentiel pour surveiller le bon fonctionnement du système sans passer 3h dans le dashboard de Mailjet.
+	
 --- ENVOYER DES MESSAGES EN TEXTE BRUT
 	
 	J'ai également apporté une petite modification au système d'envoi d'email pour qu'il soit possible d'envoyer des messages texte uniquement, ça peut servir pour baisser le score spam au maximum. Cela est possible car les blocs de commentaires dans le html du template sont supprimés avant envoi. Il faut donc avoir un template de cette forme :
