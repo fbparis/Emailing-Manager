@@ -340,7 +340,10 @@ class Marketing {
 		if (strpos($host,'.') === false) $host .= '.com';
 		
 		foreach (self::$blocked_hosts as $blocked_host) {
-			if (preg_match('#\.' . preg_quote($blocked_host,'#') . '$#si',".$host")) return false;
+			if (preg_match('#\.' . preg_quote($blocked_host,'#') . '$#si',".$host")) {
+				self::log("Blocking client registration for $user@$host");
+				return false;
+			}
 		}
 	
 		if (!preg_match(self::$host_regex,$host)) {
