@@ -18,6 +18,8 @@ define('MARKETING_SMTP_HOST','in.mailjet.com');
 define('MARKETING_SMTP_PORT',25);
 define('MARKETING_SMTP_USER','');
 define('MARKETING_SMTP_PASSWORD','');
+define('MARKETING_UNSUB_LINK_MASK','http://example.com/unsub.php?id=%s&chk=%s'); // Ajustez selon votre domaine, répertoire
+define('MARKETING_UNSUB_SECRET',''); // Un mot de passe pour la somme de contrôle des désinscriptions
 
 $weekDay = array('dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi');
 
@@ -33,6 +35,7 @@ foreach ($clients as $email=>$prenom) {
 	$body = str_replace('[[BONJOUR]]',(date('G') <= 4) || (date('G') >= 18) ? 'Bonsoir' : 'Bonjour',$body);
 	$body = str_replace('[[TRACKER]]','test_' . basename($template),$body);
 	$body = str_replace('[[JOUR]]',$weekDay[date('w')],$body);
+	$body = str_replace('[[UNSUB_LINK_FR]]',sprintf(MARKETING_UNSUB_LINK_MASK,$client->id,md5($client->id . MARKETING_UNSUB_SECRET . $client->email)),$body);
 	$body = preg_replace_callback('#\[\[([0-9]+)-([0-9]+)\]\]#s',create_function('$m','return mt_rand($m[1],$m[2]);'),$body);
 	if (preg_match('#<title>(.*?)</title>#si',$body,$m)) $subject = $m[1]; else continue;
 	if (preg_match('#<meta name="author" content="([^" ]+) ([^"]+)"#si',$body,$m)) {

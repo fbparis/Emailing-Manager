@@ -13,6 +13,8 @@ define('MARKETING_SMTP_PASSWORD','');
 define('MARKETING_MAILJET_API_KEY','');
 define('MARKETING_MAILJET_API_SECRET','');
 define('MARKETING_MAILING_INTERVAL',28800); // 8h
+define('MARKETING_UNSUB_LINK_MASK','http://example.com/unsub.php?id=%s&chk=%s'); // Ajustez selon votre domaine, répertoire
+define('MARKETING_UNSUB_SECRET',''); // Un mot de passe pour la somme de contrôle des désinscriptions
 define('DAILY_LIMIT',200); // Valeur par défaut pour un compte gratuite Mailjet
 
 require_once dirname(__FILE__) . '/class.phpmailer.php';

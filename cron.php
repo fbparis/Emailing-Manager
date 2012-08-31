@@ -209,7 +209,7 @@ if (count($notification_templates) && ($sendingLimit > 0)) {
 	debug('--- Envois de notifications');
 	foreach ($notification_templates as $m) {
 		$n = 0;
-		while ($client = Marketing::getClient("site='$m->site' AND cat='$m->cat' AND subcat='$m->subcat' AND status=" . Marketing::STATUS_LISTED . " AND emails_sent<=$m->last AND date_lastemail<" . ($NOW - MARKETING_MAILING_INTERVAL) . " ORDER BY emails_sent ASC,RAND()")) {
+		while ($client = Marketing::getClient("site='$m->site' AND cat='$m->cat' AND subcat='$m->subcat' AND status=" . Marketing::STATUS_LISTED . " AND emails_sent<=$m->last AND (date_lastemail IS NULL OR date_lastemail<" . ($NOW - MARKETING_MAILING_INTERVAL) . ") ORDER BY emails_sent ASC,RAND()")) {
 			if (Marketing::mailClient($client,false)) {
 				$cron->daily_emails_sent->notification++;
 				$cron->daily_emails_sent->total++;				
@@ -258,7 +258,7 @@ if ($hour == 23) {
 		$overdue->marketing += num_rows("site='$m->site' AND cat='$m->cat' AND subcat='$m->subcat' AND status=" . Marketing::STATUS_LISTED . " AND date_lastnewsletter<$m->lastmod");
 	}
 	foreach($notification_templates as $m) {
-		$overdue->notification += num_rows("site='$m->site' AND cat='$m->cat' AND subcat='$m->subcat' AND status=" . Marketing::STATUS_LISTED . " AND emails_sent<=$m->last AND date_lastemail<" . ($NOW - MARKETING_MAILING_INTERVAL));
+		$overdue->notification += num_rows("site='$m->site' AND cat='$m->cat' AND subcat='$m->subcat' AND status=" . Marketing::STATUS_LISTED . " AND emails_sent<=$m->last AND (date_lastemail IS NULL OR date_lastemail<" . ($NOW - MARKETING_MAILING_INTERVAL) . ')');
 	}
 	$cron->daily_stats[date('j',$NOW)] = (object) array('sent'=>null,'overdue'=>$overdue);
 	debug(" $overdue->marketing newsletters et $overdue->notification notifications en attente d'envoi");

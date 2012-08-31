@@ -268,6 +268,7 @@ class Marketing {
 		$body = str_replace('[[BONJOUR]]',(date('G') <= 4) || (date('G') >= 18) ? 'Bonsoir' : 'Bonjour',$body);
 		$body = str_replace('[[TRACKER]]','mailing_' . $campaignID,$body);
 		$body = str_replace('[[JOUR]]',self::$weekDay[date('w')],$body);
+		$body = str_replace('[[UNSUB_LINK_FR]]',sprintf(MARKETING_UNSUB_LINK_MASK,$client->id,md5($client->id . MARKETING_UNSUB_SECRET . $client->email)),$body);
 		$body = preg_replace_callback('#\[\[([0-9]+)-([0-9]+)\]\]#s',create_function('$m','return mt_rand($m[1],$m[2]);'),$body);
 		if (preg_match('#<title>(.*?)</title>#si',$body,$m)) $subject = $m[1]; else return 0;
 		if (preg_match('#<meta name="author" content="([^" ]+) ([^"]+)"#si',$body,$m)) {
