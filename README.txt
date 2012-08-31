@@ -97,6 +97,8 @@ Notez aussi que l'api utilise une fonction spéciale pour valider les emails qui
 	
 	Edit: J'ai aussi ajouté un dump des derniers logs de l'api et du cron.php (les infos les plus sensibles sont masquées au cas où) comme ça vous avez vraiment sur une page l'essentiel pour surveiller le bon fonctionnement du système sans passer 3h dans le dashboard de Mailjet.
 	
+	Edit2: Ajout d'une page basique de désinscription. En effet il est vital de remplacer le lien UNSUB de Mailjet par le votre ; le leur ne fonctionnant pas en mode SMTP vous risqueriez à la fin de vous faire suspendre le compte.
+	
 --- ENVOYER DES MESSAGES EN TEXTE BRUT
 	
 	J'ai également apporté une petite modification au système d'envoi d'email pour qu'il soit possible d'envoyer des messages texte uniquement, ça peut servir pour baisser le score spam au maximum. Cela est possible car les blocs de commentaires dans le html du template sont supprimés avant envoi. Il faut donc avoir un template de cette forme :
