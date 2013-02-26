@@ -39,6 +39,7 @@ class Marketing {
 		'gmail.com',
 		'hotmail.fr',
 		'hotmail.com',
+		'outlook.com',
 		'laposte.net',
 		'neuf.fr',
 		'live.fr',
